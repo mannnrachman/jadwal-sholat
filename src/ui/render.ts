@@ -14,11 +14,11 @@ export function renderApp(
     <div class="card">
       <div class="header">
         <span class="header-icon">\u{262A}</span>
-        <span class="header-title">Puasa</span>
+        <span class="header-title">Jadwal Sholat</span>
       </div>
 
       <div class="location-section" id="location-area">
-        <span class="location-icon">\u{1F4CD}</span>
+        <span class="location-icon">\u{27A4}</span>
         <span id="location-text">${settings.city}, ${settings.country}</span>
       </div>
 
@@ -39,6 +39,7 @@ export function renderApp(
 
       <div class="footer">
         <div class="method-selector">
+          <div class="method-label">Metode Perhitungan</div>
           <select id="method-select">
             ${CALCULATION_METHODS.map(
               (m) =>

@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    puasa_lib::run()
+    jadwal_sholat_lib::run()
 }

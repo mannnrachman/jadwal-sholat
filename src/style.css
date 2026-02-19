@@ -6,20 +6,21 @@
 
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #f0f4ff;
-  --bg-header: #1a365d;
-  --text-primary: #1a202c;
-  --text-secondary: #4a5568;
-  --text-muted: #718096;
+  --bg-secondary: #f8fafc;
+  --bg-header: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-on-header: #111827;
   --text-white: #ffffff;
-  --border: #e2e8f0;
-  --accent: #2b6cb0;
-  --accent-light: #ebf4ff;
+  --border: #e5e7eb;
+  --accent: #334155;
+  --accent-light: #f1f5f9;
   --green: #38a169;
-  --green-bg: #f0fff4;
+  --green-bg: #f0fdf4;
   --red: #e53e3e;
-  --highlight-bg: #ebf8ff;
-  --highlight-border: #90cdf4;
+  --highlight-bg: #f1f5f9;
+  --highlight-border: #cbd5e1;
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   --radius: 16px;
   --radius-sm: 8px;
@@ -27,22 +28,23 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary: #1e2130;
-    --bg-secondary: #252840;
-    --bg-header: #0f1420;
-    --text-primary: #e2e8f0;
-    --text-secondary: #a0aec0;
-    --text-muted: #718096;
+    --bg-primary: #111315;
+    --bg-secondary: #15181b;
+    --bg-header: #111315;
+    --text-primary: #f3f4f6;
+    --text-secondary: #c7ccd1;
+    --text-muted: #9ca3af;
+    --text-on-header: #ffffff;
     --text-white: #ffffff;
-    --border: #2d3748;
-    --accent: #63b3ed;
-    --accent-light: #1a2a4a;
-    --green: #68d391;
-    --green-bg: #1a2e25;
-    --red: #fc8181;
-    --highlight-bg: #1a2a3a;
-    --highlight-border: #4a90d9;
-    --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    --border: #2a2f36;
+    --accent: #d1d5db;
+    --accent-light: #181c20;
+    --green: #4ade80;
+    --green-bg: #132118;
+    --red: #f87171;
+    --highlight-bg: #161a1f;
+    --highlight-border: #3a414b;
+    --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -77,11 +79,12 @@ body {
 /* Header */
 .header {
   background: var(--bg-header);
-  color: var(--text-white);
+  color: var(--text-on-header);
   padding: 14px 16px;
   display: flex;
   align-items: center;
   gap: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
 .header-icon {
@@ -111,6 +114,7 @@ body {
 
 .location-icon {
   font-size: 14px;
+  color: var(--text-secondary);
 }
 
 #location-text {
@@ -168,6 +172,7 @@ body {
   width: 28px;
   font-size: 16px;
   flex-shrink: 0;
+  color: var(--text-secondary);
 }
 
 .prayer-label {
@@ -241,6 +246,14 @@ body {
 
 .method-selector {
   width: 100%;
+}
+
+.method-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin: 0 0 6px 2px;
+  letter-spacing: 0.2px;
 }
 
 .method-selector select {

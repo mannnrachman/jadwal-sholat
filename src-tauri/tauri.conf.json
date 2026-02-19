@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Puasa",
+  "productName": "Jadwal Sholat",
   "version": "1.0.0",
-  "identifier": "com.puasa.app",
+  "identifier": "com.jadwalsholat.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Puasa",
+        "title": "Jadwal Sholat",
         "width": 380,
         "height": 520,
         "resizable": false,

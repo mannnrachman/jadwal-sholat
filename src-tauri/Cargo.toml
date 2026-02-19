@@ -1,12 +1,12 @@
 [package]
-name = "puasa"
+name = "jadwal_sholat"
 version = "1.0.0"
 description = "Ramadan Prayer Times System Tray App"
 authors = ["you"]
 edition = "2021"
 
 [lib]
-name = "puasa_lib"
+name = "jadwal_sholat_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -20,3 +20,4 @@ tauri-plugin-positioner = { version = "2", features = ["tray-icon"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 image = { version = "0.25", default-features = false, features = ["png"] }
+dark-light = "2"

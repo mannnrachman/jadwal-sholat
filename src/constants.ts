@@ -57,10 +57,10 @@ export const DEFAULT_SETTINGS = {
 };
 
 export const PRAYER_DISPLAY = [
-  { key: 'Imsak', label: 'Imsak', icon: '\u{1F319}' },
-  { key: 'Fajr', label: 'Subuh', icon: '\u{1F304}' },
-  { key: 'Dhuhr', label: 'Dzuhur', icon: '\u{2600}\u{FE0F}' },
-  { key: 'Asr', label: 'Ashar', icon: '\u{1F324}\u{FE0F}' },
-  { key: 'Maghrib', label: 'Maghrib', icon: '\u{1F307}' },
-  { key: 'Isha', label: 'Isya', icon: '\u{1F319}' },
+  { key: 'Imsak', label: 'Imsak', icon: '\u{25D4}' },
+  { key: 'Fajr', label: 'Subuh', icon: '\u{2606}' },
+  { key: 'Dhuhr', label: 'Dzuhur', icon: '\u{2600}' },
+  { key: 'Asr', label: 'Ashar', icon: '\u{25D1}' },
+  { key: 'Maghrib', label: 'Maghrib', icon: '\u{25D3}' },
+  { key: 'Isha', label: 'Isya', icon: '\u{263D}' },
 ];

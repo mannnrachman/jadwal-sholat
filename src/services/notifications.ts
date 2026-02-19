@@ -14,12 +14,49 @@ function parseTimeToDate(timeStr: string): Date {
 }
 
 function playNotificationSound() {
+  const playWithDuration = (src: string, durationMs: number) =>
+    new Promise<void>((resolve, reject) => {
+      try {
+        const audio = new Audio(src);
+        audio.volume = 0.9;
+        audio.currentTime = 0;
+        audio.play().then(() => {
+          const stopTimer = setTimeout(() => {
+            audio.pause();
+            audio.currentTime = 0;
+          }, durationMs);
+          audio.addEventListener(
+            'ended',
+            () => {
+              clearTimeout(stopTimer);
+            },
+            { once: true }
+          );
+          resolve();
+        }).catch(() => reject(new Error('play failed')));
+      } catch {
+        reject(new Error('audio init failed'));
+      }
+    });
+
+  playWithDuration('/sounds/adzan-short.mp3', 7500)
+    .catch(() => playWithDuration('/sounds/adzan-short.wav', 7500))
+    .catch(() => playWithDuration('/sounds/notification.wav', 2500))
+    .catch(() => {});
+}
+
+async function triggerPrayerNotification(title: string, body: string) {
   try {
-    const audio = new Audio('/sounds/notification.wav');
-    audio.volume = 0.7;
-    audio.play().catch(() => {});
+    await sendNotification({ title, body });
   } catch {
-    // Sound playback is best-effort
+    // Fallback to Web Notification API when native bridge fails
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        new Notification(title, { body });
+      } catch {
+        // Ignore fallback failure
+      }
+    }
   }
 }
 
@@ -50,6 +87,10 @@ export async function scheduleNotifications(data: AladhanData, settings: AppSett
   }
   if (!permissionGranted) return;
 
+  if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
+  }
+
   clearAllNotifications();
 
   const now = new Date();
@@ -58,13 +99,11 @@ export async function scheduleNotifications(data: AladhanData, settings: AppSett
     const time = data.timings[item.key];
     const prayerDate = parseTimeToDate(time);
     const msUntil = prayerDate.getTime() - now.getTime();
+    const notificationBody = `${item.body} (${time})`;
 
     if (msUntil > 0) {
-      const timeout = setTimeout(() => {
-        sendNotification({
-          title: item.title,
-          body: `${item.body} (${time})`,
-        });
+      const timeout = setTimeout(async () => {
+        await triggerPrayerNotification(item.title, notificationBody);
 
         if (settings.soundEnabled) {
           playNotificationSound();
@@ -72,6 +111,11 @@ export async function scheduleNotifications(data: AladhanData, settings: AppSett
       }, msUntil);
 
       scheduledTimeouts.push(timeout);
+    } else if (msUntil >= -60000) {
+      await triggerPrayerNotification(item.title, notificationBody);
+      if (settings.soundEnabled) {
+        playNotificationSound();
+      }
     }
   }
 }
