@@ -45,7 +45,7 @@ function applyKemenagOffset(data: AladhanResponse, offset: number): void {
     if (month > 12) { month = 1; year += 1; }
   }
 
-  hijri.day = String(day).padStart(2, '0');
+  hijri.day = String(day);
   hijri.year = String(year);
   hijri.month.number = month;
   hijri.month.en = HIJRI_MONTH_NAMES_EN[month] ?? hijri.month.en;
@@ -83,8 +83,13 @@ export async function fetchPrayerTimes(
     timings[key] = stripTimezone(timings[key]);
   }
 
-  // Koreksi tanggal Hijri agar sesuai Kemenag RI (-1 dari hisab astronomis aladhan)
-  applyKemenagOffset(data, -1);
+  // Koreksi tanggal Hijri berdasarkan metode:
+  // - Kemenag RI (method 20): rukyat/MABIMS → 1 hari lebih lambat dari hisab astronomis aladhan → offset -1
+  // - Muhammadiyah & metode lain: sudah sesuai kalkulasi astronomis → tidak perlu koreksi
+  const hijriOffset = method === 20 ? -1 : 0;
+  if (hijriOffset !== 0) {
+    applyKemenagOffset(data, hijriOffset);
+  }
 
   return data;
 }
