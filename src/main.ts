@@ -12,6 +12,13 @@ let currentSettings: AppSettings;
 let currentData: AladhanData | null = null;
 let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
+function setMethodHint(message: string, isError = false) {
+  const hintEl = document.getElementById('method-hint');
+  if (!hintEl) return;
+  hintEl.textContent = message;
+  hintEl.style.color = isError ? '#dc2626' : 'var(--text-muted)';
+}
+
 async function refreshPrayerTimes() {
   try {
     const response = await fetchPrayerTimes(
@@ -27,8 +34,10 @@ async function refreshPrayerTimes() {
     updateCountdown(currentData);
 
     await scheduleNotifications(currentData, currentSettings);
+    return true;
   } catch (err) {
     console.error('Failed to fetch prayer times:', err);
+    return false;
   }
 }
 
@@ -42,10 +51,34 @@ function startCountdownTimer() {
 }
 
 async function handleMethodChange(methodId: number, methodSettings: string) {
+  const methodSelect = document.getElementById('method-select') as HTMLSelectElement | null;
+  const selectedMethodName = methodSelect?.selectedOptions?.[0]?.textContent?.trim() || 'metode terpilih';
+  const previousKeyTimes = currentData
+    ? `${currentData.timings.Fajr}|${currentData.timings.Dhuhr}|${currentData.timings.Asr}|${currentData.timings.Maghrib}|${currentData.timings.Isha}`
+    : '';
+
+  if (methodSelect) methodSelect.disabled = true;
+  setMethodHint('Menerapkan metode dan memuat ulang jadwal...');
+
   currentSettings.method = methodId;
   currentSettings.methodSettings = methodSettings;
   await saveSettings({ method: methodId, methodSettings });
-  await refreshPrayerTimes();
+  const ok = await refreshPrayerTimes();
+  const currentKeyTimes = currentData
+    ? `${currentData.timings.Fajr}|${currentData.timings.Dhuhr}|${currentData.timings.Asr}|${currentData.timings.Maghrib}|${currentData.timings.Isha}`
+    : '';
+  const changed = previousKeyTimes !== '' && currentKeyTimes !== '' && previousKeyTimes !== currentKeyTimes;
+
+  if (methodSelect) methodSelect.disabled = false;
+  if (ok) {
+    if (changed) {
+      setMethodHint(`Metode ${selectedMethodName} diterapkan. Jadwal berhasil diperbarui otomatis.`);
+    } else {
+      setMethodHint(`Metode ${selectedMethodName} diterapkan. Jadwal hari ini bisa saja tetap sama (normal).`);
+    }
+  } else {
+    setMethodHint('Gagal memuat jadwal. Coba pilih metode lagi atau klik Refresh.', true);
+  }
 }
 
 async function handleCitySelect(city: string, lat: number, lon: number) {
@@ -92,6 +125,7 @@ async function init() {
   initCitySearch(currentSettings, handleCitySelect);
 
   await refreshPrayerTimes();
+  setMethodHint('Perubahan metode diterapkan otomatis.');
   startCountdownTimer();
 
   // Refresh every hour

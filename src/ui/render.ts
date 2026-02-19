@@ -48,6 +48,7 @@ export function renderApp(
                 }>${m.name}</option>`
             ).join('')}
           </select>
+          <div id="method-hint" class="method-hint">Perubahan metode diterapkan otomatis.</div>
         </div>
         <div class="footer-buttons">
           <button id="btn-refresh" class="btn btn-secondary">Refresh</button>

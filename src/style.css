@@ -115,6 +115,8 @@ body {
 .location-icon {
   font-size: 14px;
   color: var(--text-secondary);
+  display: inline-block;
+  transform: rotate(-45deg);
 }
 
 #location-text {
@@ -281,6 +283,13 @@ body {
 .method-selector select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(43, 108, 176, 0.15);
+}
+
+.method-hint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  min-height: 14px;
 }
 
 .footer-buttons {
