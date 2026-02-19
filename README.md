@@ -7,6 +7,8 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![Rust](https://img.shields.io/badge/Rust-2021-orange)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
+[![QA](https://github.com/mannnrachman/jadwal-sholat/actions/workflows/qa.yml/badge.svg)](https://github.com/mannnrachman/jadwal-sholat/actions/workflows/qa.yml)
+[![Release](https://github.com/mannnrachman/jadwal-sholat/actions/workflows/release.yml/badge.svg)](https://github.com/mannnrachman/jadwal-sholat/actions/workflows/release.yml)
 
 ---
 
