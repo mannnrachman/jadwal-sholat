@@ -21,7 +21,9 @@ export async function fetchPrayerTimes(
   const d = date || new Date();
   const dateStr = formatDate(d);
 
-  let url = `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=${method}`;
+  // adjustment=-1 menyesuaikan tampilan tanggal Hijri dengan penetapan Kemenag RI (rukyat/MABIMS)
+  // yang umumnya 1 hari lebih lambat dari kalender Hijri astronomis yang digunakan aladhan.com
+  let url = `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=${method}&adjustment=-1`;
 
   if (method === 99 && methodSettings) {
     url += `&methodSettings=${methodSettings}`;
