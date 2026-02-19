@@ -2,13 +2,27 @@
 
 > A lightweight desktop system tray widget for Islamic prayer times. Runs quietly in the system tray, supports notifications with adhan sound, and adapts to your local timezone automatically.
 
-![Version](https://img.shields.io/badge/version-1.0.0-green)
+[![GitHub release](https://img.shields.io/github/v/release/mannnrachman/jadwal-sholat?color=green)](https://github.com/mannnrachman/jadwal-sholat/releases/latest)
 ![Tauri](https://img.shields.io/badge/Tauri-2.x-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![Rust](https://img.shields.io/badge/Rust-2021-orange)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 [![QA](https://github.com/mannnrachman/jadwal-sholat/actions/workflows/qa.yml/badge.svg)](https://github.com/mannnrachman/jadwal-sholat/actions/workflows/qa.yml)
 [![Release](https://github.com/mannnrachman/jadwal-sholat/actions/workflows/release.yml/badge.svg)](https://github.com/mannnrachman/jadwal-sholat/actions/workflows/release.yml)
+
+---
+
+## Download
+
+Download the latest release for your platform from the [Releases page](https://github.com/mannnrachman/jadwal-sholat/releases/latest):
+
+| Platform      | File                          |
+| ------------- | ----------------------------- |
+| Windows 10/11 | `.msi` or `.exe` installer    |
+| macOS 11+     | `.dmg`                        |
+| Linux         | `.deb` or `.AppImage`         |
+
+> No installation of Node.js or Rust is required to run the app — just download and install.
 
 ---
 
