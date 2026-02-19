@@ -1869,6 +1869,7 @@ dependencies = [
  "tauri-plugin-notification",
  "tauri-plugin-positioner",
  "tauri-plugin-store",
+ "winreg 0.52.0",
 ]
 
 [[package]]

@@ -5,7 +5,25 @@ use tauri::{
 };
 use tauri_plugin_positioner::{Position, WindowExt};
 
+#[cfg(target_os = "windows")]
+fn windows_taskbar_is_light() -> Option<bool> {
+    use winreg::enums::HKEY_CURRENT_USER;
+    use winreg::RegKey;
+
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let personalize = hkcu
+        .open_subkey("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize")
+        .ok()?;
+    let value: u32 = personalize.get_value("SystemUsesLightTheme").ok()?;
+    Some(value != 0)
+}
+
 fn should_use_dark_tray_icon() -> bool {
+    #[cfg(target_os = "windows")]
+    if let Some(taskbar_is_light) = windows_taskbar_is_light() {
+        return taskbar_is_light;
+    }
+
     matches!(dark_light::detect(), Ok(dark_light::Mode::Light))
 }
 

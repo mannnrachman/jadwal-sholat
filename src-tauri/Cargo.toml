@@ -21,3 +21,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 image = { version = "0.25", default-features = false, features = ["png"] }
 dark-light = "2"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
