@@ -26,7 +26,17 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
     let menu = Menu::with_items(app, &[&show_i, &refresh_i, &quit_i])?;
 
     TrayIconBuilder::with_id("main-tray")
-        .icon(app.default_window_icon().unwrap().clone())
+        .icon({
+            const TRAY_ICON_PNG: &[u8] = include_bytes!("../icons/tray-icon.png");
+            let img = image::load_from_memory_with_format(TRAY_ICON_PNG, image::ImageFormat::Png)
+                .map(|i| {
+                    let rgba = i.into_rgba8();
+                    let (w, h) = (rgba.width(), rgba.height());
+                    tauri::image::Image::new_owned(rgba.into_raw(), w, h)
+                })
+                .unwrap_or_else(|_| app.default_window_icon().unwrap().clone());
+            img
+        })
         .tooltip("Puasa")
         .menu(&menu)
         .show_menu_on_left_click(false)
