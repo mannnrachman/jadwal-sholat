@@ -7,21 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.1] - 2026-02-24
+
+### Added
+
+- Auto-start on OS login enabled by default after installation
+
+### Fixed
+
+- Tauri bundle version source aligned so generated installer filenames follow the intended app version
+
 ## [1.1.0] - 2026-02-24
 
 ### Added
+
 - myQuran API v3 integration as primary prayer-times source for Indonesia (Kemenag-based city list)
 - Dynamic city search backed by myQuran city endpoints (517+ kabupaten/kota)
 - Release link button in app UI pointing to GitHub Releases page
 - Screenshot assets for light/dark app preview in README
 
 ### Changed
+
 - Prayer data flow now uses myQuran as primary source with Aladhan as fallback/hijri companion
 - Fasting progress bar UX and status section layout for clearer next-prayer information
 - Widget height/layout adjusted to keep full prayer list visible without internal schedule scrolling
 - README rewritten to concise English format with API source section
 
 ### Fixed
+
 - Initial location detection flow now uses explicit `locationInitialized` flag (instead of default-city check)
 - Removed automatic adhan playback test hook during development startup
 - Tooltip on fasting progress now includes percentage and remaining time context
@@ -29,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-02-19
 
 ### Added
+
 - Initial release of Jadwal Sholat desktop widget
 - System tray icon with left-click toggle and right-click menu (Show / Refresh / Quit)
 - Real-time prayer schedule: Imsak, Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha
@@ -48,3 +62,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [1.0.0]: https://github.com/mannnrachman/jadwal-sholat/releases/tag/v1.0.0
 [1.1.0]: https://github.com/mannnrachman/jadwal-sholat/releases/tag/v1.1.0
+[1.1.1]: https://github.com/mannnrachman/jadwal-sholat/releases/tag/v1.1.1

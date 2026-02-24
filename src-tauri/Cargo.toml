@@ -1,6 +1,6 @@
 [package]
 name = "jadwal_sholat"
-version = "1.1.0"
+version = "1.1.1"
 description = "Ramadan Prayer Times System Tray App"
 authors = ["you"]
 edition = "2021"
@@ -17,6 +17,7 @@ tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-notification = "2"
 tauri-plugin-store = "2"
 tauri-plugin-positioner = { version = "2", features = ["tray-icon"] }
+tauri-plugin-autostart = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 image = { version = "0.25", default-features = false, features = ["png"] }

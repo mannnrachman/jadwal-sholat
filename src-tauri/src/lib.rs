@@ -1,6 +1,7 @@
 mod tray;
 
 use tauri::Manager;
+use tauri_plugin_autostart::ManagerExt;
 
 #[tauri::command]
 fn quit_app(app: tauri::AppHandle) {
@@ -25,9 +26,15 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_positioner::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .invoke_handler(tauri::generate_handler![quit_app, open_url])
         .setup(|app| {
             tray::create_tray(app.handle())?;
+
+            let _ = app.autolaunch().enable();
 
             // Hide main window on startup
             if let Some(window) = app.get_webview_window("main") {
