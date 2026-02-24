@@ -7,7 +7,8 @@ export function renderApp(
   onMethodChange: (methodId: number, methodSettings: string) => void,
   onRefresh: () => void,
   onQuit: () => void,
-  onLocationClick: () => void
+  onLocationClick: () => void,
+  onUpdate: () => void
 ) {
   const app = document.getElementById('app')!;
   app.innerHTML = `
@@ -32,9 +33,16 @@ export function renderApp(
       </div>
 
       <div class="status-section" id="status-section">
-        <span class="status-dot" id="status-dot"></span>
         <span id="status-text">Loading...</span>
-        <span id="countdown-text" class="countdown"></span>
+        <div class="fasting-progress-wrap" id="fasting-progress-wrap" style="display:none">
+          <div class="fasting-progress-bar" id="fasting-progress-bar">
+            <div class="fasting-progress-fill" id="fasting-progress-fill"></div>
+          </div>
+        </div>
+        <div class="next-prayer" id="next-prayer-info">
+          <span id="next-prayer-name"></span>
+          <span id="next-prayer-timeleft"></span>
+        </div>
       </div>
 
       <div class="footer">
@@ -54,16 +62,19 @@ export function renderApp(
           <button id="btn-refresh" class="btn btn-secondary">Refresh</button>
           <button id="btn-quit" class="btn btn-danger">Quit</button>
         </div>
+        <div class="footer-update">
+          <button id="btn-update" class="btn-update">Cek Pembaruan &#x2197;</button>
+        </div>
       </div>
     </div>
 
     <div class="city-overlay" id="city-overlay" style="display:none">
       <div class="city-search-panel">
         <div class="city-search-header">
-          <span>Pilih Kota</span>
+          <span>Pilih Kabupaten/Kota</span>
           <button id="city-close" class="btn-close">\u{2715}</button>
         </div>
-        <input type="text" id="city-search-input" placeholder="Cari kota..." autocomplete="off" />
+        <input type="text" id="city-search-input" placeholder="Cari kabupaten/kota..." autocomplete="off" />
         <div id="city-list" class="city-list"></div>
         <button id="btn-detect" class="btn btn-primary city-detect">Deteksi Otomatis</button>
       </div>
@@ -82,6 +93,7 @@ export function renderApp(
   document.getElementById('btn-refresh')!.addEventListener('click', onRefresh);
   document.getElementById('btn-quit')!.addEventListener('click', onQuit);
   document.getElementById('location-area')!.addEventListener('click', onLocationClick);
+  document.getElementById('btn-update')!.addEventListener('click', onUpdate);
 }
 
 export function updatePrayerTimes(data: AladhanData) {
@@ -133,16 +145,47 @@ export function updateDate(data: AladhanData) {
 export function updateCountdown(data: AladhanData) {
   const status = getCountdownStatus(data);
 
-  const dot = document.getElementById('status-dot')!;
+  const section = document.getElementById('status-section')!;
   const text = document.getElementById('status-text')!;
-  const countdown = document.getElementById('countdown-text')!;
+  const progressWrap = document.getElementById('fasting-progress-wrap')!;
+  const progressFill = document.getElementById('fasting-progress-fill')!;
+  const progressBar = document.getElementById('fasting-progress-bar')!;
+  const nextName = document.getElementById('next-prayer-name')!;
+  const nextTimeLeft = document.getElementById('next-prayer-timeleft')!;
 
-  dot.className = 'status-dot ' + (status.isFasting ? 'dot-green' : 'dot-gray');
+  section.classList.toggle('status-fasting', status.isFasting);
   text.textContent = status.statusText;
-  countdown.textContent =
-    status.nextEvent.timeLeft
-      ? `${status.nextEvent.name} ${status.nextEvent.time} (${status.nextEvent.timeLeft})`
-      : '';
+
+  if (status.isFasting && status.fastingProgress !== undefined) {
+    const pct = Math.round(status.fastingProgress);
+    progressWrap.style.display = 'block';
+    progressFill.style.width = `${pct}%`;
+
+    // Hitung sisa waktu hingga Maghrib
+    const now = new Date();
+    const [mH, mM] = data.timings.Maghrib.split(':').map(Number);
+    const maghribTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), mH, mM);
+    const msLeft = maghribTime.getTime() - now.getTime();
+    let sisaLabel = '';
+    if (msLeft > 0) {
+      const totalMins = Math.floor(msLeft / 60000);
+      const h = Math.floor(totalMins / 60);
+      const m = totalMins % 60;
+      sisaLabel = h > 0 ? `${h}j ${m}m lagi` : `${m}m lagi`;
+    }
+
+    progressBar.title = `${pct}% telah berlalu${sisaLabel ? ` • ${sisaLabel} hingga buka` : ''}`;
+  } else {
+    progressWrap.style.display = 'none';
+  }
+
+  if (status.nextEvent.timeLeft) {
+    nextName.textContent = status.nextEvent.name;
+    nextTimeLeft.textContent = status.nextEvent.timeLeft;
+  } else {
+    nextName.textContent = '';
+    nextTimeLeft.textContent = '';
+  }
 }
 
 export function updateLocation(settings: AppSettings) {

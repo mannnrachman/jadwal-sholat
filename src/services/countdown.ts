@@ -32,10 +32,11 @@ export function getCountdownStatus(data: AladhanData): FastingStatus {
   const now = new Date();
   const isRamadan = data.date.hijri.month.number === 9;
 
-  const imsakTime = parseTime(data.timings.Imsak);
+  const fajrTime = parseTime(data.timings.Fajr);
   const maghribTime = parseTime(data.timings.Maghrib);
 
-  const isFasting = isRamadan && now >= imsakTime && now < maghribTime;
+  // Puasa dimulai dari Subuh (Fajr), bukan Imsak. Imsak hanya pengingat Kemenag.
+  const isFasting = isRamadan && now >= fajrTime && now < maghribTime;
 
   // Find next event
   let nextEvent = { name: 'Imsak', time: data.timings.Imsak, timeLeft: '' };
@@ -72,5 +73,13 @@ export function getCountdownStatus(data: AladhanData): FastingStatus {
     statusText = 'Tidak Berpuasa';
   }
 
-  return { isFasting, isRamadan, nextEvent, statusText };
+  let fastingProgress: number | undefined;
+  if (isFasting) {
+    // Progress dari Subuh (Fajr) → Maghrib
+    const totalMs = maghribTime.getTime() - fajrTime.getTime();
+    const elapsedMs = now.getTime() - fajrTime.getTime();
+    fastingProgress = Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100));
+  }
+
+  return { isFasting, isRamadan, nextEvent, statusText, fastingProgress };
 }

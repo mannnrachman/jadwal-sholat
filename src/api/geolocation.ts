@@ -1,6 +1,13 @@
 import type { GeoLocation } from '../types/index';
 import { DEFAULT_SETTINGS } from '../constants';
 
+function sanitizeCityName(city: string): string {
+  return city
+    .replace(/^\s*(kota|kab\.?|kabupaten)\s+/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export async function detectLocation(): Promise<GeoLocation> {
   // Primary: ipapi.co
   try {
@@ -8,7 +15,7 @@ export async function detectLocation(): Promise<GeoLocation> {
     if (res.ok) {
       const data = await res.json();
       return {
-        city: data.city || DEFAULT_SETTINGS.city,
+        city: sanitizeCityName(data.city || DEFAULT_SETTINGS.city),
         country: data.country_name || DEFAULT_SETTINGS.country,
         lat: data.latitude || DEFAULT_SETTINGS.latitude,
         lon: data.longitude || DEFAULT_SETTINGS.longitude,
@@ -25,7 +32,7 @@ export async function detectLocation(): Promise<GeoLocation> {
     if (res.ok) {
       const data = await res.json();
       return {
-        city: data.city || DEFAULT_SETTINGS.city,
+        city: sanitizeCityName(data.city || DEFAULT_SETTINGS.city),
         country: data.country || DEFAULT_SETTINGS.country,
         lat: data.lat || DEFAULT_SETTINGS.latitude,
         lon: data.lon || DEFAULT_SETTINGS.longitude,

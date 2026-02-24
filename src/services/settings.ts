@@ -35,8 +35,8 @@ export async function saveSettings(partial: Partial<AppSettings>): Promise<void>
   await s.save();
 }
 
-export async function isFirstLaunch(): Promise<boolean> {
+export async function shouldRunInitialLocationDetection(): Promise<boolean> {
   const s = await getStore();
-  const city = await s.get('city');
-  return city === null || city === undefined;
+  const initialized = await s.get('locationInitialized');
+  return initialized !== true;
 }

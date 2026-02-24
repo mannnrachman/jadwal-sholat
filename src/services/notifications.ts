@@ -51,35 +51,25 @@ function parseTimeToDate(timeStr: string): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
 }
 
-function playNotificationSound() {
-  const playWithDuration = (src: string, durationMs: number) =>
+export function playNotificationSound() {
+  const playFull = (src: string) =>
     new Promise<void>((resolve, reject) => {
       try {
         const audio = new Audio(src);
         audio.volume = 0.9;
         audio.currentTime = 0;
         audio.play().then(() => {
-          const stopTimer = setTimeout(() => {
-            audio.pause();
-            audio.currentTime = 0;
-          }, durationMs);
-          audio.addEventListener(
-            'ended',
-            () => {
-              clearTimeout(stopTimer);
-            },
-            { once: true }
-          );
-          resolve();
+          audio.addEventListener('ended', () => resolve(), { once: true });
+          audio.addEventListener('error', () => reject(new Error('audio error')), { once: true });
         }).catch(() => reject(new Error('play failed')));
       } catch {
         reject(new Error('audio init failed'));
       }
     });
 
-  playWithDuration('/sounds/adzan-short.mp3', 7500)
-    .catch(() => playWithDuration('/sounds/adzan-short.wav', 7500))
-    .catch(() => playWithDuration('/sounds/notification.wav', 2500))
+  playFull('/sounds/adzan-short.mp3')
+    .catch(() => playFull('/sounds/adzan-short.wav'))
+    .catch(() => playFull('/sounds/notification.wav'))
     .catch(() => {});
 }
 
