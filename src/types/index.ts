@@ -70,8 +70,39 @@ export interface AppSettings {
   timezone: string;
   method: number;
   methodSettings: string;
+  myquranCityId: string;
+  locationInitialized: boolean;
   notificationsEnabled: boolean;
   soundEnabled: boolean;
+}
+
+export interface MyQuranCity {
+  id: string;
+  lokasi: string;
+}
+
+export interface MyQuranJadwal {
+  tanggal: string;
+  imsak: string;
+  subuh: string;
+  terbit: string;
+  dhuha: string;
+  dzuhur: string;
+  ashar: string;
+  maghrib: string;
+  isya: string;
+  date: string;
+}
+
+export interface MyQuranResponse {
+  status: boolean;
+  message: string;
+  data: {
+    id: string;
+    kabko: string;
+    prov: string;
+    jadwal: MyQuranJadwal | Record<string, MyQuranJadwal>;
+  };
 }
 
 export interface CalculationMethod {
@@ -95,6 +126,7 @@ export interface FastingStatus {
     timeLeft: string;
   };
   statusText: string;
+  fastingProgress?: number;
 }
 
 export interface PrayerEntry {

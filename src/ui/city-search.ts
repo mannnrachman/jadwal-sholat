@@ -1,57 +1,83 @@
-import type { AppSettings } from '../types/index';
-import { INDONESIAN_CITIES } from '../constants';
+import type { MyQuranCity } from '../types/index';
 import { detectLocation } from '../api/geolocation';
+import { fetchAllMyQuranCities, searchMyQuranCity } from '../api/myquran';
 
 export function initCitySearch(
-  settings: AppSettings,
-  onCitySelect: (city: string, lat: number, lon: number) => void
+  onCitySelect: (city: string, lat: number, lon: number, myquranCityId: string) => void
 ) {
   const overlay = document.getElementById('city-overlay')!;
   const input = document.getElementById('city-search-input') as HTMLInputElement;
   const listEl = document.getElementById('city-list')!;
   const closeBtn = document.getElementById('city-close')!;
   const detectBtn = document.getElementById('btn-detect')!;
+  let allCitiesCache: MyQuranCity[] = [];
+  let citiesLoading: Promise<void> | null = null;
+
+  function setListLoading(message: string) {
+    listEl.innerHTML = `<div class="loading">${message}</div>`;
+  }
+
+  async function ensureCitiesLoaded() {
+    if (allCitiesCache.length > 0) return;
+    if (citiesLoading) {
+      await citiesLoading;
+      return;
+    }
+
+    setListLoading('Memuat kabupaten/kota...');
+    citiesLoading = (async () => {
+      allCitiesCache = await fetchAllMyQuranCities();
+    })();
+    await citiesLoading;
+    citiesLoading = null;
+  }
 
   function showOverlay() {
     overlay.style.display = 'flex';
     input.value = '';
     input.focus();
-    renderCities('');
+    void renderCities('');
   }
 
   function hideOverlay() {
     overlay.style.display = 'none';
   }
 
-  function renderCities(filter: string) {
-    const filtered = INDONESIAN_CITIES.filter((c) =>
-      c.city.toLowerCase().includes(filter.toLowerCase())
-    );
+  async function renderCities(filter: string) {
+    try {
+      await ensureCitiesLoaded();
+      const keyword = filter.trim().toLowerCase();
+      const filtered = allCitiesCache.filter((c) => c.lokasi.toLowerCase().includes(keyword));
 
-    listEl.innerHTML = filtered
+      listEl.innerHTML = filtered
       .map(
         (c) => `
-      <div class="city-item" data-city="${c.city}" data-lat="${c.lat}" data-lon="${c.lon}">
-        ${c.city}
+      <div class="city-item" data-id="${c.id}" data-city="${c.lokasi}">
+        ${c.lokasi}
       </div>
     `
       )
       .join('');
 
-    // Attach click handlers
-    listEl.querySelectorAll('.city-item').forEach((el) => {
-      el.addEventListener('click', () => {
-        const city = (el as HTMLElement).dataset.city!;
-        const lat = parseFloat((el as HTMLElement).dataset.lat!);
-        const lon = parseFloat((el as HTMLElement).dataset.lon!);
-        onCitySelect(city, lat, lon);
-        hideOverlay();
+      if (!filtered.length) {
+        setListLoading('Tidak ada hasil.');
+      }
+
+      listEl.querySelectorAll('.city-item').forEach((el) => {
+        el.addEventListener('click', () => {
+          const city = (el as HTMLElement).dataset.city!;
+          const myquranCityId = (el as HTMLElement).dataset.id!;
+          onCitySelect(city, 0, 0, myquranCityId);
+          hideOverlay();
+        });
       });
-    });
+    } catch {
+      setListLoading('Gagal memuat data kota. Coba lagi.');
+    }
   }
 
   input.addEventListener('input', () => {
-    renderCities(input.value);
+    void renderCities(input.value);
   });
 
   closeBtn.addEventListener('click', hideOverlay);
@@ -65,7 +91,13 @@ export function initCitySearch(
     detectBtn.setAttribute('disabled', 'true');
     try {
       const loc = await detectLocation();
-      onCitySelect(loc.city, loc.lat, loc.lon);
+      const matches = await searchMyQuranCity(loc.city);
+      if (!matches.length) {
+        detectBtn.textContent = 'Kota tidak ditemukan';
+        return;
+      }
+
+      onCitySelect(matches[0].lokasi, loc.lat, loc.lon, matches[0].id);
       hideOverlay();
     } catch {
       detectBtn.textContent = 'Gagal. Coba lagi';

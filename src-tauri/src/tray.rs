@@ -28,10 +28,10 @@ fn should_use_dark_tray_icon() -> bool {
 }
 
 fn build_tray_icon() -> tauri::image::Image<'static> {
-    const TRAY_ICON_PNG: &[u8] = include_bytes!("../icons/tray-icon.png");
+    const APP_ICON_PNG: &[u8] = include_bytes!("../icons/icon.png");
     let use_dark_icon = should_use_dark_tray_icon();
 
-    image::load_from_memory_with_format(TRAY_ICON_PNG, image::ImageFormat::Png)
+    image::load_from_memory_with_format(APP_ICON_PNG, image::ImageFormat::Png)
         .map(|i| {
             let mut rgba = i.into_rgba8();
             let monochrome = if use_dark_icon { 0u8 } else { 255u8 };

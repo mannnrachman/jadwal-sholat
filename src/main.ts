@@ -2,7 +2,8 @@ import { invoke } from '@tauri-apps/api/core';
 import type { AladhanData, AppSettings } from './types/index';
 import { fetchPrayerTimes } from './api/aladhan';
 import { detectLocation } from './api/geolocation';
-import { loadSettings, saveSettings, isFirstLaunch } from './services/settings';
+import { fetchMyQuranPrayerTimes, searchMyQuranCity } from './api/myquran';
+import { loadSettings, saveSettings, shouldRunInitialLocationDetection } from './services/settings';
 import { scheduleNotifications, clearAllNotifications } from './services/notifications';
 import { renderApp, updatePrayerTimes, updateDate, updateCountdown, updateLocation } from './ui/render';
 import { initCitySearch } from './ui/city-search';
@@ -21,19 +22,50 @@ function setMethodHint(message: string, isError = false) {
 
 async function refreshPrayerTimes() {
   try {
-    const response = await fetchPrayerTimes(
-      currentSettings.latitude,
-      currentSettings.longitude,
-      currentSettings.method,
-      currentSettings.methodSettings
-    );
-    currentData = response.data;
+    const today = new Date();
+    let freshAladhanData: AladhanData | null = null;
+    const [myquranResult, aladhanResult] = await Promise.allSettled([
+      currentSettings.myquranCityId
+        ? fetchMyQuranPrayerTimes(currentSettings.myquranCityId, today)
+        : Promise.reject(new Error('no myquran city id')),
+      fetchPrayerTimes(
+        currentSettings.latitude,
+        currentSettings.longitude,
+        currentSettings.method,
+        currentSettings.methodSettings,
+        today
+      ),
+    ]);
 
-    updatePrayerTimes(currentData);
-    updateDate(currentData);
-    updateCountdown(currentData);
+    if (aladhanResult.status === 'fulfilled') {
+      freshAladhanData = aladhanResult.value.data;
+      currentData = freshAladhanData;
 
-    await scheduleNotifications(currentData, currentSettings);
+      if ((currentSettings.latitude === 0 || currentSettings.longitude === 0) && freshAladhanData.meta) {
+        currentSettings.latitude = freshAladhanData.meta.latitude;
+        currentSettings.longitude = freshAladhanData.meta.longitude;
+        await saveSettings({
+          latitude: freshAladhanData.meta.latitude,
+          longitude: freshAladhanData.meta.longitude,
+        });
+      }
+    }
+
+    if (myquranResult.status === 'fulfilled' && freshAladhanData) {
+      Object.assign(freshAladhanData.timings, myquranResult.value);
+    } else if (aladhanResult.status === 'rejected') {
+      throw new Error('Both APIs failed');
+    }
+
+    if (!freshAladhanData) {
+      throw new Error('No prayer data available');
+    }
+
+    updatePrayerTimes(freshAladhanData);
+    updateDate(freshAladhanData);
+    updateCountdown(freshAladhanData);
+
+    await scheduleNotifications(freshAladhanData, currentSettings);
     return true;
   } catch (err) {
     console.error('Failed to fetch prayer times:', err);
@@ -81,11 +113,20 @@ async function handleMethodChange(methodId: number, methodSettings: string) {
   }
 }
 
-async function handleCitySelect(city: string, lat: number, lon: number) {
+async function handleCitySelect(city: string, lat: number, lon: number, myquranCityId: string) {
   currentSettings.city = city;
-  currentSettings.latitude = lat;
-  currentSettings.longitude = lon;
-  await saveSettings({ city, latitude: lat, longitude: lon });
+  if (lat !== 0 && lon !== 0) {
+    currentSettings.latitude = lat;
+    currentSettings.longitude = lon;
+  }
+  currentSettings.myquranCityId = myquranCityId;
+  await saveSettings({
+    city,
+    myquranCityId,
+    locationInitialized: true,
+    latitude: currentSettings.latitude,
+    longitude: currentSettings.longitude,
+  });
   updateLocation(currentSettings);
   await refreshPrayerTimes();
 }
@@ -97,7 +138,7 @@ async function handleQuit() {
 
 async function init() {
   // First launch: detect location
-  if (await isFirstLaunch()) {
+  if (await shouldRunInitialLocationDetection()) {
     try {
       const loc = await detectLocation();
       await saveSettings({
@@ -106,7 +147,20 @@ async function init() {
         latitude: loc.lat,
         longitude: loc.lon,
         timezone: loc.timezone,
+        locationInitialized: true,
       });
+
+      try {
+        const cities = await searchMyQuranCity(loc.city);
+        if (cities.length > 0) {
+          await saveSettings({
+            myquranCityId: cities[0].id,
+            city: cities[0].lokasi,
+          });
+        }
+      } catch {
+        // Aladhan fallback will still work
+      }
     } catch {
       // Use defaults
     }
@@ -119,10 +173,11 @@ async function init() {
     handleMethodChange,
     refreshPrayerTimes,
     handleQuit,
-    () => {} // location click handled by city-search init
+    () => {}, // location click handled by city-search init
+    () => invoke('open_url', { url: 'https://github.com/mannnrachman/jadwal-sholat/releases' })
   );
 
-  initCitySearch(currentSettings, handleCitySelect);
+  initCitySearch(handleCitySelect);
 
   await refreshPrayerTimes();
   setMethodHint('Perubahan metode diterapkan otomatis.');
