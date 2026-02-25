@@ -3,7 +3,7 @@ import type { AladhanData, AppSettings } from './types/index';
 import { fetchPrayerTimes } from './api/aladhan';
 import { detectLocation } from './api/geolocation';
 import { fetchMyQuranPrayerTimes, searchMyQuranCity } from './api/myquran';
-import { loadSettings, saveSettings, shouldRunInitialLocationDetection } from './services/settings';
+import { loadSettings, saveSettings, shouldRunInitialLocationDetection, saveJadwal, loadJadwal } from './services/settings';
 import { scheduleNotifications, clearAllNotifications } from './services/notifications';
 import { renderApp, updatePrayerTimes, updateDate, updateCountdown, updateLocation } from './ui/render';
 import { initCitySearch } from './ui/city-search';
@@ -12,6 +12,15 @@ import './style.css';
 let currentSettings: AppSettings;
 let currentData: AladhanData | null = null;
 let countdownInterval: ReturnType<typeof setInterval> | null = null;
+let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function setApiSourceHint(usingMyQuran: boolean) {
+  const el = document.getElementById('api-source-hint');
+  if (el) {
+    el.textContent = usingMyQuran ? 'Jadwal: myQuran (Kemenag)' : 'Jadwal: Aladhan (fallback)';
+    el.style.color = usingMyQuran ? 'var(--text-muted)' : '#f59e0b';
+  }
+}
 
 function setMethodHint(message: string, isError = false) {
   const hintEl = document.getElementById('method-hint');
@@ -21,9 +30,14 @@ function setMethodHint(message: string, isError = false) {
 }
 
 async function refreshPrayerTimes() {
+  if (retryTimeout) {
+    clearTimeout(retryTimeout);
+    retryTimeout = null;
+  }
   try {
     const today = new Date();
     let freshAladhanData: AladhanData | null = null;
+    let usingMyQuran = false;
     const [myquranResult, aladhanResult] = await Promise.allSettled([
       currentSettings.myquranCityId
         ? fetchMyQuranPrayerTimes(currentSettings.myquranCityId, today)
@@ -53,6 +67,7 @@ async function refreshPrayerTimes() {
 
     if (myquranResult.status === 'fulfilled' && freshAladhanData) {
       Object.assign(freshAladhanData.timings, myquranResult.value);
+      usingMyQuran = true;
     } else if (aladhanResult.status === 'rejected') {
       throw new Error('Both APIs failed');
     }
@@ -64,11 +79,20 @@ async function refreshPrayerTimes() {
     updatePrayerTimes(freshAladhanData);
     updateDate(freshAladhanData);
     updateCountdown(freshAladhanData);
+    setApiSourceHint(usingMyQuran);
+
+    // Simpan ke cache supaya startup berikutnya tidak butuh network
+    await saveJadwal(freshAladhanData);
 
     await scheduleNotifications(freshAladhanData, currentSettings);
     return true;
   } catch (err) {
     console.error('Failed to fetch prayer times:', err);
+    // Retry otomatis setelah 30 detik jika gagal
+    retryTimeout = setTimeout(() => {
+      retryTimeout = null;
+      refreshPrayerTimes();
+    }, 30000);
     return false;
   }
 }
@@ -179,11 +203,22 @@ async function init() {
 
   initCitySearch(handleCitySelect);
 
-  await refreshPrayerTimes();
+  // Coba load jadwal dari cache dulu — langsung schedule tanpa tunggu network
+  const cachedJadwal = await loadJadwal();
+  if (cachedJadwal) {
+    currentData = cachedJadwal;
+    updatePrayerTimes(cachedJadwal);
+    updateDate(cachedJadwal);
+    updateCountdown(cachedJadwal);
+    await scheduleNotifications(cachedJadwal, currentSettings);
+  }
+
+  // Fetch fresh di background (tidak blocking)
+  refreshPrayerTimes();
   setMethodHint('Perubahan metode diterapkan otomatis.');
   startCountdownTimer();
 
-  // Refresh every hour
+  // Refresh setiap jam
   setInterval(refreshPrayerTimes, 3600000);
 }
 
