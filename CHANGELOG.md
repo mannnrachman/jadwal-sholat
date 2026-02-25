@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.2] - 2026-02-25
+
+### Fixed
+
+- **Adzan tidak tepat waktu saat aplikasi baru dibuka**: Ganti mekanisme `setTimeout` jangka panjang dengan polling interval 15 detik yang cek `Date.now()` real-time. Tahan throttle WebView, tahan sleep/hibernate/wake, tidak pernah meleset jauh
+- **Adzan bunyi saat startup (catch-up bug)**: Waktu sholat yang sudah lewat >90 detik saat app dibuka tidak lagi di-fire ulang secara salah
+- **Adzan duplicate saat Refresh/hourly interval**: Tambah `firedKeys` set per hari — setiap waktu sholat hanya bisa bunyi sekali per hari
+- **Network hang tanpa batas saat startup**: Semua fetch API (Aladhan, myQuran, geolocation) kini pakai `AbortController` dengan timeout 8 detik
+- **Tidak ada jadwal saat network gagal waktu boot**: Jadwal terakhir yang berhasil kini di-cache di settings store dan langsung dipakai saat startup sebelum fetch selesai
+- **Tidak ada indikator sumber jadwal aktif**: Tambah hint kecil di UI yang menunjukkan apakah jadwal berasal dari myQuran (Kemenag) atau Aladhan (fallback)
+- **Fetch gagal tidak dicoba ulang**: Tambah auto-retry 30 detik saat fetch API gagal, sebelumnya hanya retry setelah 1 jam
+
 ## [1.1.1] - 2026-02-24
 
 ### Added
@@ -63,3 +75,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.0.0]: https://github.com/mannnrachman/jadwal-sholat/releases/tag/v1.0.0
 [1.1.0]: https://github.com/mannnrachman/jadwal-sholat/releases/tag/v1.1.0
 [1.1.1]: https://github.com/mannnrachman/jadwal-sholat/releases/tag/v1.1.1
+[1.1.2]: https://github.com/mannnrachman/jadwal-sholat/releases/tag/v1.1.2

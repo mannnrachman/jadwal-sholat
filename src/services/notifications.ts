@@ -5,7 +5,57 @@ import {
 } from '@tauri-apps/plugin-notification';
 import type { AladhanData, AppSettings, PrayerTimings } from '../types/index';
 
-let scheduledTimeouts: ReturnType<typeof setTimeout>[] = [];
+// Polling-based scheduler — tahan throttle WebView, tahan sleep/wake, no duplicate
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
+let pollingData: AladhanData | null = null;
+let pollingSettings: AppSettings | null = null;
+
+// Key format: "YYYY-MM-DD-PrayerKey" — reset otomatis saat hari berganti
+const firedKeys = new Set<string>();
+
+function todayDateStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function firedKey(prayerKey: string): string {
+  return `${todayDateStr()}-${prayerKey}`;
+}
+
+function purgeStaleFiredKeys() {
+  const todayPrefix = todayDateStr();
+  for (const key of firedKeys) {
+    if (!key.startsWith(todayPrefix)) {
+      firedKeys.delete(key);
+    }
+  }
+}
+
+function checkAndFirePrayers() {
+  if (!pollingData || !pollingSettings) return;
+  if (!pollingSettings.notificationsEnabled) return;
+
+  const now = new Date();
+
+  for (const item of NOTIFICATION_MAP) {
+    const time = pollingData.timings[item.key];
+    if (!time) continue;
+
+    const prayerDate = parseTimeToDate(time);
+    const msUntil = prayerDate.getTime() - now.getTime();
+    const key = firedKey(item.key);
+
+    // Window: dari tepat waktu sampai +90 detik, tidak boleh sudah pernah dikirim
+    if (msUntil <= 0 && msUntil >= -90000 && !firedKeys.has(key)) {
+      firedKeys.add(key);
+      const body = `${item.body} (${time})`;
+      triggerPrayerNotification(item.title, body).catch(() => {});
+      if (pollingSettings.soundEnabled) {
+        playNotificationSound();
+      }
+    }
+  }
+}
 
 function showInAppToast(title: string, body: string) {
   if (typeof document === 'undefined') return;
@@ -114,14 +164,23 @@ const NOTIFICATION_MAP: { key: keyof PrayerTimings; title: string; body: string 
 ];
 
 export function clearAllNotifications() {
-  for (const t of scheduledTimeouts) {
-    clearTimeout(t);
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
   }
-  scheduledTimeouts = [];
+  pollingData = null;
+  pollingSettings = null;
 }
 
 export async function scheduleNotifications(data: AladhanData, settings: AppSettings) {
-  if (!settings.notificationsEnabled) return;
+  // Update data untuk polling loop
+  pollingData = data;
+  pollingSettings = settings;
+
+  if (!settings.notificationsEnabled) {
+    clearAllNotifications();
+    return;
+  }
 
   // Ensure permission
   let permissionGranted = await isPermissionGranted();
@@ -135,31 +194,24 @@ export async function scheduleNotifications(data: AladhanData, settings: AppSett
     Notification.requestPermission().catch(() => {});
   }
 
-  clearAllNotifications();
+  // Buang key hari kemarin
+  purgeStaleFiredKeys();
 
+  // Pre-mark semua waktu sholat yang sudah lewat >90 detik sebagai fired
+  // Ini mencegah catch-up saat app pertama kali dibuka / refresh
   const now = new Date();
-
   for (const item of NOTIFICATION_MAP) {
     const time = data.timings[item.key];
+    if (!time) continue;
     const prayerDate = parseTimeToDate(time);
     const msUntil = prayerDate.getTime() - now.getTime();
-    const notificationBody = `${item.body} (${time})`;
-
-    if (msUntil > 0) {
-      const timeout = setTimeout(async () => {
-        await triggerPrayerNotification(item.title, notificationBody);
-
-        if (settings.soundEnabled) {
-          playNotificationSound();
-        }
-      }, msUntil);
-
-      scheduledTimeouts.push(timeout);
-    } else if (msUntil >= -60000) {
-      await triggerPrayerNotification(item.title, notificationBody);
-      if (settings.soundEnabled) {
-        playNotificationSound();
-      }
+    if (msUntil < -90000) {
+      firedKeys.add(firedKey(item.key));
     }
+  }
+
+  // Mulai polling jika belum jalan
+  if (!pollingInterval) {
+    pollingInterval = setInterval(checkAndFirePrayers, 15000);
   }
 }

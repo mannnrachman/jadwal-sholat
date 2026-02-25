@@ -8,10 +8,16 @@ function sanitizeCityName(city: string): string {
     .trim();
 }
 
+function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 export async function detectLocation(): Promise<GeoLocation> {
   // Primary: ipapi.co
   try {
-    const res = await fetch('https://ipapi.co/json/');
+    const res = await fetchWithTimeout('https://ipapi.co/json/');
     if (res.ok) {
       const data = await res.json();
       return {
@@ -28,7 +34,7 @@ export async function detectLocation(): Promise<GeoLocation> {
 
   // Fallback: ip-api.com
   try {
-    const res = await fetch('http://ip-api.com/json/');
+    const res = await fetchWithTimeout('http://ip-api.com/json/');
     if (res.ok) {
       const data = await res.json();
       return {

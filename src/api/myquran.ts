@@ -26,13 +26,19 @@ function isJadwalEntry(value: unknown): value is {
   return typeof value === 'object' && value !== null && 'imsak' in value && 'maghrib' in value;
 }
 
+function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 export async function searchMyQuranCity(keyword: string): Promise<MyQuranCity[]> {
   if (!keyword.trim()) {
     return [];
   }
 
   const q = encodeURIComponent(keyword.trim());
-  const response = await fetch(`https://api.myquran.com/v3/sholat/kota/cari/${q}`);
+  const response = await fetchWithTimeout(`https://api.myquran.com/v3/sholat/kota/cari/${q}`);
   if (!response.ok) {
     throw new Error(`myQuran city search error: ${response.status}`);
   }
@@ -46,7 +52,7 @@ export async function searchMyQuranCity(keyword: string): Promise<MyQuranCity[]>
 }
 
 export async function fetchAllMyQuranCities(): Promise<MyQuranCity[]> {
-  const response = await fetch('https://api.myquran.com/v3/sholat/kota/semua');
+  const response = await fetchWithTimeout('https://api.myquran.com/v3/sholat/kota/semua', 15000);
   if (!response.ok) {
     throw new Error(`myQuran cities error: ${response.status}`);
   }
@@ -61,7 +67,7 @@ export async function fetchAllMyQuranCities(): Promise<MyQuranCity[]> {
 
 export async function fetchMyQuranPrayerTimes(cityId: string, date: Date = new Date()): Promise<PrayerTimings> {
   const dateStr = formatDate(date);
-  const response = await fetch(`https://api.myquran.com/v3/sholat/jadwal/${encodeURIComponent(cityId)}/${dateStr}`);
+  const response = await fetchWithTimeout(`https://api.myquran.com/v3/sholat/jadwal/${encodeURIComponent(cityId)}/${dateStr}`);
 
   if (!response.ok) {
     throw new Error(`myQuran prayer times error: ${response.status}`);

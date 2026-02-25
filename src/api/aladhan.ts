@@ -70,7 +70,14 @@ export async function fetchPrayerTimes(
     url += `&methodSettings=${methodSettings}`;
   }
 
-  const response = await fetch(url);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  let response: Response;
+  try {
+    response = await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
   if (!response.ok) {
     throw new Error(`Aladhan API error: ${response.status}`);
   }

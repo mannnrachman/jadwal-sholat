@@ -1,5 +1,5 @@
 import { load } from '@tauri-apps/plugin-store';
-import type { AppSettings } from '../types/index';
+import type { AppSettings, AladhanData } from '../types/index';
 import { DEFAULT_SETTINGS } from '../constants';
 
 let store: Awaited<ReturnType<typeof load>> | null = null;
@@ -39,4 +39,20 @@ export async function shouldRunInitialLocationDetection(): Promise<boolean> {
   const s = await getStore();
   const initialized = await s.get('locationInitialized');
   return initialized !== true;
+}
+
+export async function saveJadwal(data: AladhanData): Promise<void> {
+  const s = await getStore();
+  await s.set('cachedJadwal', data as unknown as Record<string, unknown>);
+  await s.save();
+}
+
+export async function loadJadwal(): Promise<AladhanData | null> {
+  const s = await getStore();
+  const cached = await s.get('cachedJadwal');
+  if (!cached || typeof cached !== 'object') return null;
+  // Validate it has timings
+  const obj = cached as Record<string, unknown>;
+  if (!obj.timings || !obj.date) return null;
+  return obj as unknown as AladhanData;
 }

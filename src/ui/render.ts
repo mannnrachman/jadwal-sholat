@@ -57,6 +57,7 @@ export function renderApp(
             ).join('')}
           </select>
           <div id="method-hint" class="method-hint">Perubahan metode diterapkan otomatis.</div>
+          <div id="api-source-hint" class="method-hint" style="margin-top:2px;font-size:10px;opacity:0.7;">Memuat jadwal...</div>
         </div>
         <div class="footer-buttons">
           <button id="btn-refresh" class="btn btn-secondary">Refresh</button>
