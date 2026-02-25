@@ -1,6 +1,6 @@
 [package]
 name = "jadwal_sholat"
-version = "1.1.1"
+version = "1.1.2"
 description = "Ramadan Prayer Times System Tray App"
 authors = ["you"]
 edition = "2021"
